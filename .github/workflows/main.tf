@@ -24,12 +24,3 @@ module "ecs_saver" {
 resource "aws_ecs_cluster" "main" {
   name = "test"
 }
-
-resource "aws_ecs_task_definition" "main" {
-  family                   = local.qualified_service_name
-  execution_role_arn       = aws_iam_role.ecs.arn
-  task_role_arn            = aws_iam_role.ecs.arn
-  network_mode             = "awsvpc"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.ecs_task_size.cpu
-  memory                   = var.ecs_task_size.memory
