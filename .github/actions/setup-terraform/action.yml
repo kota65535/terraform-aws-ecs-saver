@@ -1,0 +1,34 @@
+name: Setup terraform
+description: Setup terraform according to .tool-versions
+
+inputs:
+  aws-access-key-id:
+    description: AWS access key ID
+    required: true
+  aws-secret-access-key:
+    description: AWS secret access key
+    required: true
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-region: ap-northeast-1
+    - name: Get tool versions
+      run: |
+        set -x
+        echo "TERRAFORM_VERSION=$(cat .tool-versions | perl -ne 'print $1 if /^terraform (.*)$/')" >> $GITHUB_ENV
+      shell: bash
+    - name: Setup terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+    - name: Setup node (cf. https://github.com/hashicorp/setup-terraform/issues/84)
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16

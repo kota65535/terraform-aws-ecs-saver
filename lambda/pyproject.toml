@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "ecs-saver"
+version = "0.1.0"
+description = ""
+authors = ["Tomohiko Ozawa <kota65535@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "~3.9"
+boto3 = "1.26.58"
+pytz = "2022.7.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
