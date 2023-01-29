@@ -8,7 +8,7 @@ import boto3
 from pytz import timezone
 
 # ========== Environment Variables to be configured ==========
-TIME_ZONE = os.getenv('TIME_ZONE', 'UTC')
+TIMEZONE = os.getenv('TIMEZONE', 'UTC')
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -18,7 +18,7 @@ ecs = boto3.client('ecs')
 def lambda_handler(event: Dict, context: Dict):
     logger.info(f'Input: {json.dumps(event)}')
 
-    current_hour = str(datetime.now(tz=timezone(TIME_ZONE)).hour)
+    current_hour = str(datetime.now(tz=timezone(TIMEZONE)).hour)
 
     logger.info(f'current hour: {current_hour}')
 

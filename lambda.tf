@@ -11,7 +11,7 @@ resource "aws_lambda_function" "main" {
 
   environment {
     variables = {
-      TIME_ZONE = var.time_zone
+      TIMEZONE = var.timezone
     }
   }
 }

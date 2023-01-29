@@ -24,3 +24,8 @@ module "ecs_saver" {
 resource "aws_ecs_cluster" "main" {
   name = "test"
 }
+
+module "ec2-saver" {
+  source  = "kota65535/ec2-saver/aws"
+  version = "0.0.1"
+}

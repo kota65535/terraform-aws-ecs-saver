@@ -10,7 +10,7 @@ variable "lambda_iam_role_name" {
   default     = "ecs-saver"
 }
 
-variable "time_zone" {
+variable "timezone" {
   type    = string
   default = "UTC"
 }
