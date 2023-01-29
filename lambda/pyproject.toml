@@ -10,6 +10,17 @@ boto3 = "1.26.58"
 pytz = "2022.7.1"
 
 
+[tool.poetry.group.dev.dependencies]
+black = "22.12.0"
+isort = "5.12.0"
+
+[tool.black]
+line-length = 119
+
+[tool.isort]
+profile = "black"
+line_length = 119
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
