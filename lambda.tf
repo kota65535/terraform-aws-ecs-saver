@@ -1,5 +1,6 @@
 resource "aws_lambda_function" "main" {
   function_name    = var.lambda_name
+  description      = "Start or stop ECS services at a specified time"
   handler          = "function.lambda_handler"
   filename         = data.archive_file.lambda_zip.output_path
   runtime          = "python${local.lambda_python_version}"
