@@ -6,7 +6,7 @@ authors = ["Tomohiko Ozawa <kota65535@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "~3.9"
-boto3 = "1.26.58"
+boto3 = "1.26.90"
 pytz = "2022.7.1"
 
 
