@@ -6,7 +6,7 @@ resource "aws_lambda_function" "main" {
   runtime          = "python${local.lambda_python_version}"
   role             = aws_iam_role.lambda.arn
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
-  layers           = [aws_lambda_layer_version.main.arn]
+  layers           = [module.lambda_layer.lambda_layer_version.arn]
   timeout          = 30
 
   environment {
@@ -37,4 +37,8 @@ data "archive_file" "lambda_zip" {
     content  = file("${path.module}/lambda/src/function.py")
     filename = "function.py"
   }
+}
+
+data "temporary_directory" "lambda" {
+  name = "lambda/${var.lambda_name}"
 }
