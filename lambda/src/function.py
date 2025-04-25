@@ -11,11 +11,7 @@ TIMEZONE = os.getenv("TIMEZONE", "UTC")
 
 # ========== Logger ==========
 logger = logging.getLogger()
-handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter(fmt="%(asctime)s %(name)s %(levelname)s %(message)s"))
-logger.addHandler(handler)
 logger.setLevel(logging.INFO)
-logger.propagate = False
 
 # Boto3 client
 ecs = boto3.client("ecs")
@@ -106,5 +102,8 @@ def chunks(lst, n):
         yield lst[i : i + n]
 
 
-# if __name__ == '__main__':
-#     lambda_handler({"current_hour": "21"}, {})
+if __name__ == '__main__':
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter(fmt="%(asctime)s %(name)s %(levelname)s %(message)s"))
+    logger.addHandler(handler)
+    lambda_handler({"current_hour": ""}, {})
