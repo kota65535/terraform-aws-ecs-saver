@@ -1,13 +1,13 @@
 [tool.poetry]
 name = "ecs-saver"
-version = "0.1.0"
+version = "0.2.0"
 description = ""
 authors = ["Tomohiko Ozawa <kota65535@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "~3.9"
-boto3 = "1.26.58"
-pytz = "2022.7.1"
+python = "~3.13"
+boto3 = "1.38.1"
+pytz = "2025.2"
 
 
 [tool.poetry.group.dev.dependencies]
