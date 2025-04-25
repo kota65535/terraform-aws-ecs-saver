@@ -9,8 +9,15 @@ from pytz import timezone
 # ========== Environment Variables to be configured ==========
 TIMEZONE = os.getenv("TIMEZONE", "UTC")
 
+# ========== Logger ==========
 logger = logging.getLogger()
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter(fmt="%(asctime)s %(name)s %(levelname)s %(message)s"))
+logger.addHandler(handler)
 logger.setLevel(logging.INFO)
+logger.propagate = False
+
+# Boto3 client
 ecs = boto3.client("ecs")
 
 
@@ -31,43 +38,43 @@ def lambda_handler(event: dict, context: dict):
 
 def stop_ecs_services(current_hour: str):
     services = get_ecs_services_by_tag("AutoStopTime", current_hour)
-    services_to_stop = [s for s in services if s["desiredCount"] > 0]
-    if not services_to_stop:
-        logger.info("no services to stop.")
-        return
+
+    services_to_stop = []
+    for s in services:
+        stopped_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "StoppedCount"), 0)
+        if s["runningCount"] <= stopped_count:
+            continue
+        services_to_stop.append((s, stopped_count))
 
     logger.info(f"{len(services_to_stop)} ECS services to stop.")
-    for s in services_to_stop:
-        logger.info(f'arn: {s["serviceArn"]}, name: {s["serviceName"]}')
+    for s, c in services_to_stop:
+        logger.info(f'arn: {s["serviceArn"]}, name: {s["serviceName"]}, count: {c}')
 
-    for s in services_to_stop:
+    for s, c in services_to_stop:
         ecs.tag_resource(
             resourceArn=s["serviceArn"],
             tags=[{"key": "LastDesiredCount", "value": str(s["desiredCount"])}],
         )
-        ecs.update_service(cluster=s["clusterArn"], service=s["serviceArn"], desiredCount=0)
-        tasks = ecs.list_tasks(cluster=s["clusterArn"], serviceName=s["serviceArn"])
-        for ta in tasks["taskArns"]:
-            ecs.stop_task(cluster=s["clusterArn"], task=ta)
+        ecs.update_service(cluster=s["clusterArn"], service=s["serviceArn"], desiredCount=c)
 
 
 def start_ecs_services(current_hour: str):
     services = get_ecs_services_by_tag("AutoStartTime", current_hour)
-    services_to_start = [s for s in services if s["desiredCount"] == 0]
-    if not services_to_start:
-        logger.info("no services to start.")
-        return
+
+    services_to_start = []
+    for s in services:
+        desired_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "LastDesiredCount"), 1)
+        if s["runningCount"] >= desired_count:
+            continue
+        services_to_start.append((s, desired_count))
 
     logger.info(f"{len(services_to_start)} ECS services to start.")
-    desired_counts = []
-    for s in services_to_start:
-        desired_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "LastDesiredCount"), 1)
-        desired_counts.append(desired_count)
-        logger.info(f'arn: {s["serviceArn"]}, name: {s["serviceName"]}, desiredCount: {desired_count}')
+    for s, c in services_to_start:
+        logger.info(f'arn: {s["serviceArn"]}, name: {s["serviceName"]}, desiredCount: {c}')
 
-    for s, d in zip(services_to_start, desired_counts):
+    for s, c in services_to_start:
         ecs.untag_resource(resourceArn=s["serviceArn"], tagKeys=["LastDesiredCount"])
-        ecs.update_service(cluster=s["clusterArn"], service=s["serviceArn"], desiredCount=d)
+        ecs.update_service(cluster=s["clusterArn"], service=s["serviceArn"], desiredCount=c)
 
 
 def get_ecs_services_by_tag(name, value):
@@ -97,3 +104,7 @@ def get_ecs_services_by_tag(name, value):
 def chunks(lst, n):
     for i in range(0, len(lst), n):
         yield lst[i : i + n]
+
+
+# if __name__ == '__main__':
+#     lambda_handler({"current_hour": "21"}, {})
