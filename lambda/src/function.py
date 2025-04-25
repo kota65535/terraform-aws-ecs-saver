@@ -41,7 +41,7 @@ def stop_ecs_services(current_hour: str):
 
     services_to_stop = []
     for s in services:
-        stopped_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "StoppedCount"), 0)
+        stopped_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "AutoStopCount"), 0)
         if s["runningCount"] <= stopped_count:
             continue
         services_to_stop.append((s, stopped_count))
