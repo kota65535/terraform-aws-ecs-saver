@@ -8,6 +8,7 @@ authors = ["Tomohiko Ozawa <kota65535@gmail.com>"]
 python = "~3.13"
 boto3 = "1.38.1"
 pytz = "2025.2"
+python-json-logger = "^3.3.0"
 
 
 [tool.poetry.group.dev.dependencies]
