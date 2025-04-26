@@ -39,7 +39,7 @@ Start at 7:00 AM and stop at 10:00 PM on Tuesday:
 - AutoStopTime: `22`
 - AutoStartWeekDay: `2`
 
-Start at 10:00 AM and scale down to 1 task at 2:00 AM the next day on weekdays only:
+Start at 10:00 AM and scale down to 1 task at 2:00 AM the next day on weekdays:
 
 - AutoStartTime: `10`
 - AutoStopTime: `2`
