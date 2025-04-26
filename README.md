@@ -23,7 +23,7 @@ Then add following tags to your ECS Service.
 | AutoStartTime    | Start time in 24-hour format (0-23)                                           |
 | AutoStartWeekDay | Space-seperated list of weekdays as integers to start (1-7, Monday to Sunday) |
 | AutoStopTime     | Stop time in 24-hour format (0-23)                                            |
-| AutoStartWeekDay | Space-seperated list of weekdays as integers to stop (1-7, Monday to Sunday)  |
+| AutoStopWeekDay | Space-seperated list of weekdays as integers to stop (1-7, Monday to Sunday)  |
 | AutoStopCount    | Number of tasks when stopped. Default: 0                                      |
 
 ## Examples
