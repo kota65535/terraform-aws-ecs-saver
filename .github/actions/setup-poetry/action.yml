@@ -20,7 +20,7 @@ runs:
         echo "POETRY_VERSION=$(cat .tool-versions | perl -ne 'print $1 if /^poetry (.*?)$/')" >> $GITHUB_ENV
       shell: bash
     - name: Setup Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install poetry
