@@ -1,8 +1,9 @@
 terraform {
   backend "s3" {
-    bucket = "terraform-backend-561678142736"
-    region = "ap-northeast-1"
-    key    = "terraform-aws-ecs-saver.tfstate"
+    bucket       = "terraform-backend-561678142736"
+    region       = "ap-northeast-1"
+    key          = "terraform-aws-ecs-saver.tfstate"
+    use_lockfile = true
   }
   required_providers {
     aws = {
