@@ -20,23 +20,37 @@ ecs = boto3.client("ecs")
 def lambda_handler(event: dict, context: dict):
     logger.info(f"Input: {json.dumps(event)}")
 
-    if "current_hour" in event:
-        # for debug purpose
-        current_hour = event["current_hour"]
-    else:
-        current_hour = str(datetime.now(tz=timezone(TIMEZONE)).hour)
+    now = datetime.now(tz=timezone(TIMEZONE))
+    current_hour = now.hour
+    current_weekday = now.isoweekday()
 
-    logger.info(f"current hour: {current_hour}")
+    # For debug
+    if "hour" in event:
+        current_hour = event["hour"]
+    if "weekday" in event:
+        current_weekday = event["weekday"]
 
-    stop_ecs_services(current_hour)
-    start_ecs_services(current_hour)
+    logger.info(f"hour: {current_hour}, weekday: {current_weekday}")
+
+    stop_ecs_services(current_hour, current_weekday)
+    start_ecs_services(current_hour, current_weekday)
 
 
-def stop_ecs_services(current_hour: str):
+def stop_ecs_services(current_hour: int, current_weekday: int):
+    current_hour = str(current_hour)
+    current_weekday = str(current_weekday)
+
     services = get_ecs_services_by_tag("AutoStopTime", current_hour)
 
     services_to_stop = []
     for s in services:
+        # Check day of the week matches
+        weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStopWeekDay"), None)
+        if weekdays_str:
+            weekdays = weekdays_str.split()
+            if current_weekday not in weekdays:
+                continue
+        # Check if the service is already stopped
         stopped_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "AutoStopCount"), 0)
         if s["runningCount"] <= stopped_count:
             continue
@@ -47,18 +61,30 @@ def stop_ecs_services(current_hour: str):
         logger.info(f'arn: {s["serviceArn"]}, name: {s["serviceName"]}, count: {c}')
 
     for s, c in services_to_stop:
+        # Save the current desired task count as tag
         ecs.tag_resource(
             resourceArn=s["serviceArn"],
             tags=[{"key": "LastDesiredCount", "value": str(s["desiredCount"])}],
         )
+        # Stop service
         ecs.update_service(cluster=s["clusterArn"], service=s["serviceArn"], desiredCount=c)
 
 
-def start_ecs_services(current_hour: str):
+def start_ecs_services(current_hour: int, current_weekday: int):
+    current_hour = str(current_hour)
+    current_weekday = str(current_weekday)
+
     services = get_ecs_services_by_tag("AutoStartTime", current_hour)
 
     services_to_start = []
     for s in services:
+        # Check day of the week matches
+        weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStartWeekDay"), None)
+        if weekdays_str:
+            weekdays = weekdays_str.split()
+            if current_weekday not in weekdays:
+                continue
+        # Check if the service is already started
         desired_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "LastDesiredCount"), 1)
         if s["runningCount"] >= desired_count:
             continue
@@ -66,10 +92,12 @@ def start_ecs_services(current_hour: str):
 
     logger.info(f"{len(services_to_start)} ECS services to start.")
     for s, c in services_to_start:
-        logger.info(f'arn: {s["serviceArn"]}, name: {s["serviceName"]}, desiredCount: {c}')
+        logger.info(f'arn: {s["serviceArn"]}, name: {s["serviceName"]}, count: {c}')
 
     for s, c in services_to_start:
+        # Remove the last desired task count tag
         ecs.untag_resource(resourceArn=s["serviceArn"], tagKeys=["LastDesiredCount"])
+        # Start service
         ecs.update_service(cluster=s["clusterArn"], service=s["serviceArn"], desiredCount=c)
 
 
@@ -106,4 +134,4 @@ if __name__ == '__main__':
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(fmt="%(asctime)s %(name)s %(levelname)s %(message)s"))
     logger.addHandler(handler)
-    lambda_handler({"current_hour": ""}, {})
+    lambda_handler({"hour": 0, "weekday": 0}, {})
