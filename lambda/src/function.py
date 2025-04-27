@@ -45,7 +45,7 @@ def stop_ecs_services(current_hour: int, current_weekday: int):
     services_to_stop = []
     for s in services:
         # Check day of the week matches
-        weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStopWeekDay"), None)
+        weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStopWeekday"), None)
         if weekdays_str:
             weekdays = weekdays_str.split()
             if current_weekday not in weekdays:
@@ -79,7 +79,7 @@ def start_ecs_services(current_hour: int, current_weekday: int):
     services_to_start = []
     for s in services:
         # Check day of the week matches
-        weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStartWeekDay"), None)
+        weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStartWeekday"), None)
         if weekdays_str:
             weekdays = weekdays_str.split()
             if current_weekday not in weekdays:
