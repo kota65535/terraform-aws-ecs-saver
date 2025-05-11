@@ -25,7 +25,7 @@ runs:
         echo "TERRAFORM_VERSION=$(cat .tool-versions | perl -ne 'print $1 if /^terraform (.*)$/')" >> $GITHUB_ENV
       shell: bash
     - name: Setup terraform
-      uses: hashicorp/setup-terraform@v2
+      uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: ${{ env.TERRAFORM_VERSION }}
     - name: Setup node (cf. https://github.com/hashicorp/setup-terraform/issues/84)
