@@ -89,16 +89,16 @@ def stop_ecs_services_by_schedule(current_hour: int, current_weekday: int):
 
     services = get_ecs_services_by_tag([{"key": "AutoStopTime", "value": current_hour}])
     # Check day of the week matches
-    services_to_stop = []
+    target_services = []
     for s in services:
         weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStopWeekday"), None)
         if weekdays_str:
             weekdays = weekdays_str.split()
             if current_weekday not in weekdays:
                 continue
-        services_to_stop.append(s)
+        target_services.append(s)
 
-    stop_ecs_services(services_to_stop)
+    stop_ecs_services(target_services)
 
 
 def start_ecs_services_by_schedule(current_hour: int, current_weekday: int):
@@ -107,31 +107,34 @@ def start_ecs_services_by_schedule(current_hour: int, current_weekday: int):
 
     services = get_ecs_services_by_tag([{"key": "AutoStartTime", "value": current_hour}])
     # Check day of the week matches
-    services_to_start = []
+    target_services = []
     for s in services:
         weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStartWeekday"), None)
         if weekdays_str:
             weekdays = weekdays_str.split()
             if current_weekday not in weekdays:
                 continue
-        services_to_start.append(s)
+        target_services.append(s)
 
-    start_ecs_services(services_to_start)
+    start_ecs_services(target_services)
 
 
 def stop_ecs_services(services: list):
-    services_to_stop = []
+    target_services = []
     for s in services:
         # Check if the service is already stopped
         stopped_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "AutoStopCount"), 0)
         if s["runningCount"] <= stopped_count:
             continue
-        services_to_stop.append((s, stopped_count))
+        target_services.append((s, stopped_count))
 
-    info = "\n".join([f'arn: {s[0]["serviceArn"]}, count: {s[1]}' for s in services_to_stop])
-    logger.info(f"stopping {len(services_to_stop)} services:\n{info}")
+    if target_services:
+        info = "\n".join([f'arn: {s[0]["serviceArn"]}, count: {s[1]}' for s in target_services])
+        logger.info(f"stopping {len(target_services)} services:\n{info}")
+    else:
+        logger.info("no services to stop")
 
-    for s, c in services_to_stop:
+    for s, c in target_services:
         # Save the current desired task count as tag
         ecs.tag_resource(
             resourceArn=s["serviceArn"],
@@ -142,18 +145,21 @@ def stop_ecs_services(services: list):
 
 
 def start_ecs_services(services: list):
-    services_to_start = []
+    target_services = []
     for s in services:
         # Check if the service is already started
         desired_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "LastDesiredCount"), 1)
         if s["runningCount"] >= desired_count:
             continue
-        services_to_start.append((s, desired_count))
+        target_services.append((s, desired_count))
 
-    info = "\n".join([f'arn: {s[0]["serviceArn"]}, count: {s[1]}' for s in services_to_start])
-    logger.info(f"starting {len(services_to_start)} services:\n{info}")
+    if target_services:
+        info = "\n".join([f'arn: {s[0]["serviceArn"]}, count: {s[1]}' for s in target_services])
+        logger.info(f"starting {len(target_services)} services:\n{info}")
+    else:
+        logger.info("no services to start")
 
-    for s, c in services_to_start:
+    for s, c in target_services:
         # Remove the last desired task count tag
         ecs.untag_resource(resourceArn=s["serviceArn"], tagKeys=["LastDesiredCount"])
         # Start service
