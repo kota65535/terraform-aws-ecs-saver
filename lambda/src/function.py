@@ -96,6 +96,7 @@ def stop_ecs_services_by_schedule(current_hour: int, current_weekday: int):
             weekdays = weekdays_str.split()
             if current_weekday not in weekdays:
                 continue
+        services_to_stop.append(s)
 
     stop_ecs_services(services_to_stop)
 
@@ -113,6 +114,7 @@ def start_ecs_services_by_schedule(current_hour: int, current_weekday: int):
             weekdays = weekdays_str.split()
             if current_weekday not in weekdays:
                 continue
+        services_to_start.append(s)
 
     start_ecs_services(services_to_start)
 
@@ -192,8 +194,8 @@ if __name__ == "__main__":
     handler.setFormatter(logging.Formatter(fmt="%(asctime)s %(name)s %(levelname)s %(message)s"))
     logger.addHandler(handler)
 
-    # lambda_handler({"hour": 9, "weekday": 0}, {})
-    lambda_handler({"action": "start", "tags": [{"key": "Project", "value": "sample-ts"}]}, {})
+    lambda_handler({"hour": 22, "weekday": 2}, {})
+    # lambda_handler({"action": "start", "tags": [{"key": "Project", "value": "sample-ts"}]}, {})
     # lambda_handler(
     #     {"action": "start", "tags": [{"key": "Project", "value": "sample-ts"}, {"key": "Island", "value": "01"}]}, {}
     # )
