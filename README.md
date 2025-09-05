@@ -46,3 +46,41 @@ Start at 10:00 AM and scale down to 1 task at 2:00 AM the next day on weekdays:
 - AutoStartWeekday: `1 2 3 4 5`
 - AutoStopCount: `1`
  
+
+## Invoke Lambda function manually
+
+You can start/stop ECS Services manually by invoking the Lambda function.
+
+```
+aws lambda invoke --function-name ecs-saver --payload '<payload>' out
+```
+
+### Payload format
+
+| Key      | Type           | Description                                                                                               | Example                                    |
+|----------|----------------|-----------------------------------------------------------------------------------------------------------|--------------------------------------------|
+| action   | string         | Operation to perform (`start` or `stop`)                                                                  | `"stop"`                                   |
+| cluster  | string         | ECS cluster name. Must be used with `services`.                                                           | `"my-cluster"`                             |
+| services | list of string | List of ECS service names. Must be used with `cluster`.                                                   | `["my-service-1", "my-service-2"]`         |
+| tags     | list of object | List of ECS service tags in the format `{"key": <key>, "value": <value>}`. All values must match exactly. | `[{"key": "Project", "value": "awesome"}]` |
+
+### Example
+
+Stop `my-service-1` and `my-service-2` in `my-cluster`.
+
+```json
+{
+  "action": "stop",
+  "cluster": "my-cluster",
+  "services": ["my-service-1", "my-service-2"]
+}
+```
+
+Start all services with the tags `Project: awesome` and `Env: dev`.
+
+```json
+{
+  "action": "start",
+  "tags": [{"key": "Project", "value": "awesome"}, {"key": "Env", "value": "dev"}]
+}
+```
