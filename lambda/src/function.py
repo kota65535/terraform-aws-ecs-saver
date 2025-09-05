@@ -200,10 +200,14 @@ if __name__ == "__main__":
     handler.setFormatter(logging.Formatter(fmt="%(asctime)s %(name)s %(levelname)s %(message)s"))
     logger.addHandler(handler)
 
-    lambda_handler({"hour": 22, "weekday": 2}, {})
+    # lambda_handler({"hour": 0, "weekday": 0}, {})
     # lambda_handler({"action": "start", "tags": [{"key": "Project", "value": "sample-ts"}]}, {})
     # lambda_handler(
     #     {"action": "start", "tags": [{"key": "Project", "value": "sample-ts"}, {"key": "Island", "value": "01"}]}, {}
     # )
-    # lambda_handler({"action": "stop", "cluster": "sample-ts", "service": "sample-ts-server-01"}, {})
-    # lambda_handler({"action": "start", "cluster": "sample-ts", "service": "sample-ts-server-01"}, {})
+    # lambda_handler(
+    #     {"action": "stop", "cluster": "sample-ts", "services": ["sample-ts-server-01", "sample-ts-gateway-01"]}, {}
+    # )
+    # lambda_handler(
+    #     {"action": "start", "cluster": "sample-ts", "services": ["sample-ts-server-01", "sample-ts-gateway-01"]}, {}
+    # )
