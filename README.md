@@ -84,3 +84,29 @@ Start all services with the tags `Project: awesome` and `Env: dev`.
   "tags": [{"key": "Project", "value": "awesome"}, {"key": "Env", "value": "dev"}]
 }
 ```
+
+## Notes
+
+### Do not delete `LastDesiredCount` tag
+
+This module saves the desired count to a tag called `LastDesiredCount` when stopping an ECS service. Therefore, if you delete this tag, you will not be able to restore the service.
+If you manage ECS services with Terraform, please ignore changes to this tag.
+
+```terraform
+resource "aws_ecs_service" "main" {
+
+  ...other configurations...
+
+  lifecycle {
+    ignore_changes = [
+      tags["LastDesiredCount"]
+    ]
+  } 
+}
+```
+
+
+
+
+
+
