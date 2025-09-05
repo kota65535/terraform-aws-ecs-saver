@@ -20,45 +20,114 @@ ecs = boto3.client("ecs")
 def lambda_handler(event: dict, context: dict):
     logger.info(f"Input: {json.dumps(event)}")
 
-    now = datetime.now(tz=timezone(TIMEZONE))
-    current_hour = now.hour
-    current_weekday = now.isoweekday()
+    if "action" in event:
+        # Force start/stop a service
 
-    # For debug
-    if "hour" in event:
-        current_hour = event["hour"]
-    if "weekday" in event:
-        current_weekday = event["weekday"]
+        action = event["action"]
+        if action not in ["start", "stop"]:
+            raise Exception(f"unsupported action: {action}")
 
-    logger.info(f"hour: {current_hour}, weekday: {current_weekday}")
+        if "cluster" in event and "services" in event:
+            cluster = event["cluster"]
+            services = event["services"]
+            if action == "stop":
+                stop_ecs_services_by_name(cluster, services)
+            if action == "start":
+                start_ecs_services_by_name(cluster, services)
+        elif "tags" in event:
+            tags = event["tags"]
+            if action == "stop":
+                stop_ecs_services_by_tags(tags)
+            if action == "start":
+                start_ecs_services_by_tags(tags)
+        else:
+            raise Exception("either cluster/service or tags must be specified")
+    else:
+        # Scheduled start/stop
 
-    stop_ecs_services(current_hour, current_weekday)
-    start_ecs_services(current_hour, current_weekday)
+        now = datetime.now(tz=timezone(TIMEZONE))
+        current_hour = now.hour
+        current_weekday = now.isoweekday()
+
+        # For debug
+        if "hour" in event:
+            current_hour = event["hour"]
+        if "weekday" in event:
+            current_weekday = event["weekday"]
+
+        logger.info(f"hour: {current_hour}, weekday: {current_weekday}")
+
+        stop_ecs_services_by_schedule(current_hour, current_weekday)
+        start_ecs_services_by_schedule(current_hour, current_weekday)
 
 
-def stop_ecs_services(current_hour: int, current_weekday: int):
+def stop_ecs_services_by_name(cluster: str, services: list[str]):
+    res = ecs.describe_services(cluster=cluster, services=services, include=["TAGS"])
+    services = res["services"]
+    stop_ecs_services(services)
+
+
+def start_ecs_services_by_name(cluster: str, service: list[str]):
+    res = ecs.describe_services(cluster=cluster, services=service, include=["TAGS"])
+    services = res["services"]
+    start_ecs_services(services)
+
+
+def stop_ecs_services_by_tags(tags: list):
+    services = get_ecs_services_by_tag(tags)
+    stop_ecs_services(services)
+
+
+def start_ecs_services_by_tags(tags: list):
+    services = get_ecs_services_by_tag(tags)
+    start_ecs_services(services)
+
+
+def stop_ecs_services_by_schedule(current_hour: int, current_weekday: int):
     current_hour = str(current_hour)
     current_weekday = str(current_weekday)
 
-    services = get_ecs_services_by_tag("AutoStopTime", current_hour)
-
+    services = get_ecs_services_by_tag([{"key": "AutoStopTime", "value": current_hour}])
+    # Check day of the week matches
     services_to_stop = []
     for s in services:
-        # Check day of the week matches
         weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStopWeekday"), None)
         if weekdays_str:
             weekdays = weekdays_str.split()
             if current_weekday not in weekdays:
                 continue
+
+    stop_ecs_services(services_to_stop)
+
+
+def start_ecs_services_by_schedule(current_hour: int, current_weekday: int):
+    current_hour = str(current_hour)
+    current_weekday = str(current_weekday)
+
+    services = get_ecs_services_by_tag([{"key": "AutoStartTime", "value": current_hour}])
+    # Check day of the week matches
+    services_to_stop = []
+    for s in services:
+        weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStartWeekday"), None)
+        if weekdays_str:
+            weekdays = weekdays_str.split()
+            if current_weekday not in weekdays:
+                continue
+
+    stop_ecs_services(services_to_stop)
+
+
+def stop_ecs_services(services: list):
+    services_to_stop = []
+    for s in services:
         # Check if the service is already stopped
         stopped_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "AutoStopCount"), 0)
         if s["runningCount"] <= stopped_count:
             continue
         services_to_stop.append((s, stopped_count))
 
-    logger.info(f"{len(services_to_stop)} ECS services to stop.")
-    for s, c in services_to_stop:
-        logger.info(f'arn: {s["serviceArn"]}, name: {s["serviceName"]}, count: {c}')
+    info = "\n".join([f'arn: {s[0]["serviceArn"]}, count: {s[1]}' for s in services_to_stop])
+    logger.info(f"stopping {len(services_to_stop)} services:\n{info}")
 
     for s, c in services_to_stop:
         # Save the current desired task count as tag
@@ -70,29 +139,17 @@ def stop_ecs_services(current_hour: int, current_weekday: int):
         ecs.update_service(cluster=s["clusterArn"], service=s["serviceArn"], desiredCount=c)
 
 
-def start_ecs_services(current_hour: int, current_weekday: int):
-    current_hour = str(current_hour)
-    current_weekday = str(current_weekday)
-
-    services = get_ecs_services_by_tag("AutoStartTime", current_hour)
-
+def start_ecs_services(services: list):
     services_to_start = []
     for s in services:
-        # Check day of the week matches
-        weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStartWeekday"), None)
-        if weekdays_str:
-            weekdays = weekdays_str.split()
-            if current_weekday not in weekdays:
-                continue
         # Check if the service is already started
         desired_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "LastDesiredCount"), 1)
         if s["runningCount"] >= desired_count:
             continue
         services_to_start.append((s, desired_count))
 
-    logger.info(f"{len(services_to_start)} ECS services to start.")
-    for s, c in services_to_start:
-        logger.info(f'arn: {s["serviceArn"]}, name: {s["serviceName"]}, count: {c}')
+    info = "\n".join([f'arn: {s[0]["serviceArn"]}, count: {s[1]}' for s in services_to_start])
+    logger.info(f"starting {len(services_to_start)} services:\n{info}")
 
     for s, c in services_to_start:
         # Remove the last desired task count tag
@@ -101,7 +158,7 @@ def start_ecs_services(current_hour: int, current_weekday: int):
         ecs.update_service(cluster=s["clusterArn"], service=s["serviceArn"], desiredCount=c)
 
 
-def get_ecs_services_by_tag(name, value):
+def get_ecs_services_by_tag(tags):
     res = ecs.list_clusters()
     cluster_arns = res["clusterArns"]
     while "nextToken" in res:
@@ -119,8 +176,8 @@ def get_ecs_services_by_tag(name, value):
         for sas in chunks(service_arns, 10):
             res = ecs.describe_services(cluster=ca, services=sas, include=["TAGS"])
             for s in res["services"]:
-                tags = s.get("tags", [])
-                if next((t for t in tags if t["key"] == name and t["value"] == value), None):
+                service_tags = s.get("tags", [])
+                if all((t in service_tags) for t in tags):
                     services.append(s)
     return services
 
@@ -130,8 +187,15 @@ def chunks(lst, n):
         yield lst[i : i + n]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter(fmt="%(asctime)s %(name)s %(levelname)s %(message)s"))
     logger.addHandler(handler)
-    lambda_handler({"hour": 0, "weekday": 0}, {})
+
+    # lambda_handler({"hour": 9, "weekday": 0}, {})
+    lambda_handler({"action": "start", "tags": [{"key": "Project", "value": "sample-ts"}]}, {})
+    # lambda_handler(
+    #     {"action": "start", "tags": [{"key": "Project", "value": "sample-ts"}, {"key": "Island", "value": "01"}]}, {}
+    # )
+    # lambda_handler({"action": "stop", "cluster": "sample-ts", "service": "sample-ts-server-01"}, {})
+    # lambda_handler({"action": "start", "cluster": "sample-ts", "service": "sample-ts-server-01"}, {})
