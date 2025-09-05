@@ -81,6 +81,6 @@ Start all services with the tags `Project: awesome` and `Env: dev`.
 ```json
 {
   "action": "start",
-  "tags": [{"key": "Project", "value": "awesome"}, [{"key": "Env", "value": "dev"}]],
+  "tags": [{"key": "Project", "value": "awesome"}, {"key": "Env", "value": "dev"}]
 }
 ```
