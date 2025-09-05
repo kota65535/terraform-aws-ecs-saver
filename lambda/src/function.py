@@ -106,7 +106,7 @@ def start_ecs_services_by_schedule(current_hour: int, current_weekday: int):
 
     services = get_ecs_services_by_tag([{"key": "AutoStartTime", "value": current_hour}])
     # Check day of the week matches
-    services_to_stop = []
+    services_to_start = []
     for s in services:
         weekdays_str = next((t["value"] for t in s["tags"] if t["key"] == "AutoStartWeekday"), None)
         if weekdays_str:
@@ -114,7 +114,7 @@ def start_ecs_services_by_schedule(current_hour: int, current_weekday: int):
             if current_weekday not in weekdays:
                 continue
 
-    stop_ecs_services(services_to_stop)
+    start_ecs_services(services_to_start)
 
 
 def stop_ecs_services(services: list):
