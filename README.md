@@ -9,7 +9,7 @@ Deploy the module.
 ```terraform
 module "ecs-saver" {
   source  = "kota65535/ecs-saver/aws"
-  version = "0.4.0"
+  version = "0.6.0"
 
   # Default is UTC
   timezone = "Asia/Tokyo"
