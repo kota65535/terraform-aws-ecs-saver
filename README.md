@@ -60,8 +60,8 @@ aws lambda invoke --function-name ecs-saver --payload '<payload>' out
 | Key      | Type           | Description                                                                                               | Example                                    |
 |----------|----------------|-----------------------------------------------------------------------------------------------------------|--------------------------------------------|
 | action   | string         | Operation to perform (`start` or `stop`)                                                                  | `"stop"`                                   |
-| cluster  | string         | ECS cluster name                                                                                          | `"my-cluster"`                             |
-| services | list of string | List of ECS service names of the cluster                                                                  | `["my-service-1", "my-service-2"]`         |
+| cluster  | string         | ECS cluster name. Must be used with `services`.                                                           | `"my-cluster"`                             |
+| services | list of string | List of ECS service names. Must be used with `cluster`.                                                   | `["my-service-1", "my-service-2"]`         |
 | tags     | list of object | List of ECS service tags in the format `{"key": <key>, "value": <value>}`. All values must match exactly. | `[{"key": "Project": "value": "awesome"}]` |
 
 ### Example
