@@ -124,7 +124,7 @@ def stop_ecs_services(services: list):
     for s in services:
         # Check if the service is already stopped
         stopped_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "AutoStopCount"), 0)
-        if s["runningCount"] <= stopped_count:
+        if s["desiredCount"] <= stopped_count:
             continue
         target_services.append((s, stopped_count))
 
@@ -149,7 +149,7 @@ def start_ecs_services(services: list):
     for s in services:
         # Check if the service is already started
         desired_count = next((int(t["value"]) for t in s["tags"] if t["key"] == "LastDesiredCount"), 1)
-        if s["runningCount"] >= desired_count:
+        if s["desiredCount"] >= desired_count:
             continue
         target_services.append((s, desired_count))
 

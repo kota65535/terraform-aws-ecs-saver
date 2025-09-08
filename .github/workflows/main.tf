@@ -62,6 +62,7 @@ resource "aws_ecs_service" "main" {
     assign_public_ip = true
   }
   tags = {
+    Project       = "test"
     AutoStartTime = 10
     AutoStopTime  = 11
   }
@@ -73,8 +74,8 @@ resource "aws_ecs_task_definition" "main" {
   task_role_arn            = aws_iam_role.ecs.arn
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 512
-  memory                   = 1024
+  cpu                      = 256
+  memory                   = 512
   container_definitions = jsonencode([
     {
       name      = "ubuntu"
