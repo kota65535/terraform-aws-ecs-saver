@@ -49,7 +49,7 @@ runs:
         restore-keys: ${{ runner.os }}-poetry-
 
     - name: Setup terraform
-      uses: hashicorp/setup-terraform@v2
+      uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: ${{ env.TERRAFORM_VERSION }}
 
