@@ -45,7 +45,7 @@ runs:
       if: ${{ inputs.working-directory != '.' }}
       with:
         path: ~/.cache/pypoetry
-        key: ${{ runner.os }}-poetry-${{ hashFiles(format('{0}/**/poetry.lock', inputs.working-directory)) }}
+        key: ${{ runner.os }}-poetry-${{ hashFiles(format('{0}/**/poetry.lock', inputs.poetry-working-directory)) }}
         restore-keys: ${{ runner.os }}-poetry-
 
     - name: Setup terraform
