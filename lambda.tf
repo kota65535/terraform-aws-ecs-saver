@@ -8,6 +8,7 @@ resource "aws_lambda_function" "main" {
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
   layers           = [module.lambda_layer.lambda_layer_version.arn]
   timeout          = 30
+  tags             = var.tags
 
   environment {
     variables = {

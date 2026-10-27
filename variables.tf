@@ -14,3 +14,9 @@ variable "timezone" {
   type    = string
   default = "UTC"
 }
+
+variable "tags" {
+  description = "Tags to add to the resources created by this module"
+  type        = map(string)
+  default     = {}
+}
